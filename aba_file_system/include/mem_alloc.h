@@ -9,7 +9,7 @@
 #include "error.h"
 
 /*
- * reserva un espacio en la memoria de tamano size
+ * Allocate a block of memory of the specified size.
  */
 static __inline__ void* xmalloc (size_t size)
 {
@@ -20,8 +20,7 @@ static __inline__ void* xmalloc (size_t size)
 }
 
 /*
- * reserva un espacio en memoria con nmemb elementos
- * de tamano size incializados en 0
+ * Allocate a block of memory of the specified size and initialize it to 0.
  */
 static __inline__ void* xcalloc(size_t nmemb, size_t size){
 	size_t len = nmemb*size;
@@ -31,7 +30,7 @@ static __inline__ void* xcalloc(size_t nmemb, size_t size){
 }
 
 /*
- * reserva un nuevo espacio de tamano size en memoria para el puntero ptr
+ * Allocate a new block of memory of the specified size for the a pointer.
  */
 static __inline__ void* xrealloc (void *ptr, size_t size)
 {

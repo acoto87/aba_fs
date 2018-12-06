@@ -6,76 +6,74 @@
 #include "declarations.h"
 
 /*
- * Lee de disco la secuencia de bytes de un determinado cluster
- * cluster: cluster que se va a leer
- * data: 	buffer para almacenar la secuencia de bytes
+ * Read from disk the sequence of bytes of a cluster
+ * cluster: cluster to read
+ * data: 	buffer to store the bytes
  */
 extern s32 ReadCluster(u64 cluster, u8 *data, FILE *fp);
 /*
- * Escribe en disco una secuencia de bytes en un determinado cluster
- * cluster: cluster en que se va a escribir
- * data: 	buffer con la secuencia de bytes a escribir
+ * Write a sequence of bytes ot a cluster
+ * cluster: cluster to be written
+ * data: 	buffer with the bytes to write
  */
 extern s32 WriteCluster(u64 cluster, u8 *data, FILE *fp);
 /*
- * Lee un record de la mft
- * record_number: 	record que se va a leer
- * record: 			estructura para almacenar los datos del record
+ * Read a MFT record
+ * record_number: 	the record number
+ * record: 			struct to store the record data
  */
 extern s32 MftReadRecord(u64 record_number, mft_file_record *record, FILE *fp);
 /*
- * Escribe un record de la mft
- * Procurar escribir el cluster y que los bytes restantes queden en 0
- * record_number: 	record que se va a escribir
- * record: 			estructura con los datos del record a escribir
+ * Write a MFT record
+ * Ensure that the cluster is written and the remaining bytes are 0
+ * record_number: 	record to be written
+ * record: 			struct with the data to store
  */
 extern s32 MftWriteRecord(u64 record_number, mft_file_record *record, FILE *fp);
 /*
- * Anade una entrada de directorio
- * dir: 	directorio al que se le anade la entrada
- * entry: 	entrada de directorio
+ * Add an entry to the directory
+ * dir: 	directory to add the entry
+ * entry: 	the entry
  */
 extern s32 AddDirEntry(mft_file_record *dir, directory_entry *entry, FILE *fp);
 /*
- * Elimina una entrada de directorio
- * dir: 	directorio al que se le elimina la entrada
- * entry: 	entrada de directorio
+ * Remove an entry to the directory
+ * dir: 	directory to remove the entry
+ * entry: 	the entry
  */
 extern s32 RemoveDirEntry(mft_file_record *dir, u64 record_number, FILE *fp);
 /*
- * Encuentra la entrada correspondiente al nombre del fichero especificado
- * Devuelve NULL si no encuentra la entrada
- * dir:			directorio en el que buscar la entrada
- * filename: 	nombre del fichero a buscar
- * fp:			puntero al fichero disco. Si se pasa NULL y el puntero es inicializado
- * 				dentro de la funcion, no se liberara la memoria correspondiente a dicho
- * 				puntero
+ * Find the entry corresponding to the name of the specified file
+ * Return NULL if the entry is not found
+ * dir:			directory in which to search for the entry
+ * filename: 	name of the file to search
+ * fp:			pointer to the disk file. If NULL is passed and the pointer is initialized
+ *              inside the function, the corresponding memory of the pointer will not be released
  */
 extern directory_entry* FindDirEntry(mft_file_record* dir, const char *filename, FILE *fp);
 /*
- * Hace no residente el atributo data del record especificado
+ * Makes the attr data of the record non-resident
  */
 extern s32 MakeNonResident(mft_file_record *record, FILE *fp);
 /*
- * Busca en la Mft una entrada vacia
- * Devuelve el numero de la entrada
+ * Search in the MFT an empty entry. Return the entry number.
  */
 extern u64 FindEmptyRecord(FILE *fp);
 /*
- * Encuentra dado un path el record correspondiente y lo deja en actual
- * deja tambien en el paremetro parent el directorio padre del fichero
+ * Find the corresponding record given a path and leave it in current
+ * also leaves the parent directory of the file in the paremeter parent
  */
 extern s32 FindMftRecordOfPath(const char *path, mft_file_record *parent, mft_file_record *actual, FILE *fp);
 /*
- * Copia el contenido del record src al record dest
+ * Copy the contents of the src record to the dest
  */
 extern s32 CopyMftRecord(mft_file_record *dest, mft_file_record *src);
 /*
- * Libera un record de la Mft
+ * Release a record of the MFT
  */
 extern s32 FreeMftRecord(mft_file_record *record, FILE *fp);
 /*
- * Reserva un record de la Mft
+ * Reserve a record of the MFT
  */
 extern s32 ReserveMftRecord(u64 record, FILE *fp);
 extern u64 FindCluster(u64 record, u64 requestCluster, FILE *fp);

@@ -602,9 +602,6 @@ static int abafs_getattr(const char *path, struct stat *stbuf)
 //   	stbuf->st_ctim = 0;
 
 
-   	//EL PROBLEMA ERA QUE SOLO SE LE HACE free A UN PUNTERO CREADO CON malloc O calloc
-   	//O ALGO POR EL ESTILO, A UN PUNTERO INICIALIZADO CON ASIGNACION DIRECTA NO SE LE
-   	//PUEDE HACER free
    	free(parent);
 	free(actual);
     fclose(fp);
@@ -683,7 +680,7 @@ static int abafs_open(const char *path, struct fuse_file_info *fi)
 		fclose(fp);
 		return -EACCES;
 	}
-	//res = (actual->mode | fi->flags) == 0 ? -EACCES : 0;
+	// res = (actual->mode | fi->flags) == 0 ? -EACCES : 0;
 	free(parent);
 	free(actual);
     fclose(fp);
@@ -769,7 +766,7 @@ static int abafs_mkdir(const char *path, mode_t mode)
 	u8 newlength=0;
 	char *newrecord_name = (char*)xcalloc(1, MAX_LENGTH_NAME+1);
 
-	//47 es el codigo ascii del '/'
+	// 47 is the code of '/'
 	while(length>0 && path[length-1] != 47){
 		length--;
 		newlength++;
@@ -777,7 +774,7 @@ static int abafs_mkdir(const char *path, mode_t mode)
 	strcpy(newrecord_name, path + length);
 
 	mft_file_record *newrecord = (mft_file_record*)xcalloc(1, sizeof(mft_file_record));
-   	u64 record = FindEmptyRecord(fp); //encontrar un record vacio
+   	u64 record = FindEmptyRecord(fp);
 
 	newrecord->mode = mode | S_IFDIR;
 	newrecord->nlinks = 1;
@@ -947,7 +944,7 @@ static int abafs_rename(const char *path, const char *newpath)
 		fclose(fp);
    		return res;
 	}
-	//obtengo el nuevo nombre del path nuevo
+	
 	u32 newpathlength = strlen(newpath);
 	u8 newlength = 0;
 	char *newname = (char*)xcalloc(1, MAX_LENGTH_NAME);
@@ -964,7 +961,7 @@ static int abafs_rename(const char *path, const char *newpath)
 		fclose(fp);
 		return -EEXIST;
 	}
-	//elimino la entrada de directorio actual
+	
 	if((res = RemoveDirEntry(parent, actual->record_number, fp)) != 0){
 		free(newname);
 		free(parent);
@@ -976,7 +973,7 @@ static int abafs_rename(const char *path, const char *newpath)
 	newEntry->name_len = newlength;
 	newEntry->entry_number = actual->record_number;
 	strcpy(newEntry->filename, newname);
-	//y la anado de nuevo al directorio padre
+	
 	if((res = AddDirEntry(parent, newEntry, fp)) != 0){
 		free(newname);
 		free(newEntry);
@@ -1547,7 +1544,7 @@ static int abafs_release(const char* path, struct fuse_file_info *fi){
 		fclose(fp);
 		return -EACCES;
 	}
-	//res = (actual->mode | fi->flags) == 0 ? -EACCES : 0;
+	// res = (actual->mode | fi->flags) == 0 ? -EACCES : 0;
 	free(parent);
 	free(actual);
     fclose(fp);
@@ -1555,7 +1552,7 @@ static int abafs_release(const char* path, struct fuse_file_info *fi){
 }
 static int abafs_statfs(const char *path, struct statvfs *st_fs)
 {
-	//The 'f_frsize', 'f_favail', 'f_fsid' and 'f_flag' fields are ignored
+	// The 'f_frsize', 'f_favail', 'f_fsid' and 'f_flag' fields are ignored
 	st_fs->f_bsize=BOOT_SECTOR->cluster_size;
 	st_fs->f_blocks=BOOT_SECTOR->number_of_clusters;
 	u64 free=0;

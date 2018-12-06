@@ -8,8 +8,8 @@
 #include "global.h"
 
 /*
- * Funcion para manejar los errores en el sistema de ficheros
- * Se deberia llamar a esta funcion cada vez que ocurra un error
+ * This function handles and log the file system errors.
+ * This function should be called any time an error occurs.
  */
 static __inline__ void error(u32 e_code, const char *error, ...){
 	FILE *log;

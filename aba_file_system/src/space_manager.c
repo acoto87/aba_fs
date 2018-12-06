@@ -39,7 +39,7 @@ u64 FindEmptyClusters(u64 *len, FILE *fp){
 			}
 		}
 	}
-	//FALTA BUSCAR EN EL BITMAP!!!! para la proxima version del sistema
+	
 	*len = 0;
 	return 0;
 }
@@ -107,13 +107,13 @@ s32 LoadBuddySystem(FILE *fp){
 	u64 bitmapsize = bitmapcount*BOOT_SECTOR->cluster_size;
 	u32 errorCode=0;
 	u8 *bitmap = (u8*)xcalloc(1, bitmapsize);
-	//cargar el bitmap completo
+	
 	for(i=0; i<bitmapcount; i++){
 		if((errorCode = ReadCluster(i + 1, bitmap + BOOT_SECTOR->cluster_size*i, fp)) != 0){
 			return errorCode;
 		}
 	}
-	//colocar solo los cluster despues del mft_zone
+	// place the clusters after the mft_zone
 	u64 bitmapBitsCount = BOOT_SECTOR->disk_size/BOOT_SECTOR->cluster_size;
 	u32 startBit = BOOT_SECTOR->logical_mft_cluster + BOOT_SECTOR->mft_zone_clusters + 2;
 	u32 count=0;
@@ -207,7 +207,7 @@ s32 RemoveBuddyNode(u32 pos, struct BuddyNode *node){
 	memcpy(node, BuddyList[pos], sizeof(struct BuddyNode));
 	queueCount = BuddyList[pos]->count;
 	BuddyList[pos] = BuddyList[pos]->next;
-	//si habia uno solo, entonces se quedo en NULL, le asigno memoria
+	
 	if(queueCount == 1){
 		BuddyList[pos] = (struct BuddyNode*)xcalloc(1, sizeof(struct BuddyNode));
 	}
@@ -235,7 +235,7 @@ s32 PrintBitmap(FILE *fp, FILE *disk){
 	u64 bitmapsize = bitmapcount*BOOT_SECTOR->cluster_size;
 	u32 errorCode=0;
 	u8 *bitmap = (u8*)xcalloc(1, bitmapsize);
-	//cargar el bitmap completo
+	
 	u32 i;
 	for(i=0; i<bitmapcount; i++){
 		if((errorCode = ReadCluster(i + 1, bitmap + BOOT_SECTOR->cluster_size*i, disk)) != 0){

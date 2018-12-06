@@ -4,7 +4,7 @@
 
 #include <stdio.h>
 #include <math.h>
-#include "formater.h"
+#include "formatter.h"
 #include "declarations.h"
 #include "error.h"
 #include "mem_alloc.h"
@@ -17,33 +17,33 @@ int FormatDisk(char *disk_filename, const u64 disk_size, const u32 cluster_size)
 		fp = CreateDisk(disk_filename, disk_size, cluster_size);
 	}
 	if((fp = freopen(disk_filename, "rw+", fp)) == NULL){
-		error(-EACCES, "Error formateando la particion");
+		error(-EACCES, "Error formatting the partition");
 		return -1;
 	}
-	//rellenar la estructura boot_sector
+	// fill the boot_sector struct
 	BOOT_SECTOR = (struct aba_boot_sector*)xmalloc(sizeof(struct aba_boot_sector));
 	FillBootSector(disk_size, cluster_size, BOOT_SECTOR);
 	if(WriteCluster(0, (u8*)BOOT_SECTOR, fp) != 0){
-		error(-EIO, "Error de escritura en disco, no se puedo escribir el BOOT_SECTOR");
+		error(-EIO, "Error writing on disk, the BOOT_SECTOR couldn't be written");
 		free(BOOT_SECTOR);
 		fclose(fp);
 		return -EIO;
 	}
-	//rellenar los clusters de datos del bitmap
+	// fill the data clusters of the bitmap
 	u64 bmp_clusters_count = (BOOT_SECTOR->disk_size/BOOT_SECTOR->cluster_size)/(BOOT_SECTOR->cluster_size*8) + 1;
 	u64 bmp_size = (BOOT_SECTOR->disk_size/BOOT_SECTOR->cluster_size)/8;
 	u8 *bitmap_data = (u8*)xcalloc(1, bmp_size);
 	u64 i;
-	//setear el bitmap
+	// set the bitmap
 	for(i=0; i<1 + bmp_clusters_count + 1; i++){
 		bit_set(bitmap_data, i, 1);
 	}
-	//crear el fichero de la Mft
+	// create the MFT file
 	mft_file_record *mft = InitializeMft();
 	bit_set(bitmap_data, mft->dataCluster, 1);
 	u8 *mftdata = (u8*)xcalloc(1, BOOT_SECTOR->cluster_size);
 	if(ReadCluster(mft->dataCluster, mftdata, fp) != 0){
-		error(-EIO, "Error de lectura en disco");
+		error(-EIO, "Error reading the disk");
 		free(bitmap_data);
 		free(mft);
 		free(BOOT_SECTOR);
@@ -56,7 +56,7 @@ int FormatDisk(char *disk_filename, const u64 disk_size, const u32 cluster_size)
 	memcpy(mftdata, &start, 8);
 	memcpy(mftdata + 8, &count, 8);
 	if(WriteCluster(mft->dataCluster, mftdata, fp) != 0){
-		error(-EIO, "Error de lectura en disco");
+		error(-EIO, "Error reading the disk");
 		free(bitmap_data);
 		free(mft);
 		free(BOOT_SECTOR);
@@ -65,7 +65,7 @@ int FormatDisk(char *disk_filename, const u64 disk_size, const u32 cluster_size)
 	}
 	free(mftdata);
 	if(MftWriteRecord(mft->record_number, mft, fp) != 0){
-		error(-EIO, "Error de lectura en disco");
+		error(-EIO, "Error reading the disk");
 		free(bitmap_data);
 		free(mft);
 		free(BOOT_SECTOR);
@@ -73,12 +73,12 @@ int FormatDisk(char *disk_filename, const u64 disk_size, const u32 cluster_size)
 		return -EIO;
 	}
 
-	//crear el directorio Root
+	// create the Root directory
 	mft_file_record *root = InitializeRootDir();
 	bit_set(bitmap_data, root->dataCluster, 1);
 	u8 *rootdata = (u8*)xcalloc(1, BOOT_SECTOR->cluster_size);
 	if(ReadCluster(root->dataCluster, rootdata, fp) != 0){
-		error(-EIO, "Error de lectura en disco");
+		error(-EIO, "Error reading the disk");
 		free(bitmap_data);
 		free(mft);
 		free(root);
@@ -94,7 +94,7 @@ int FormatDisk(char *disk_filename, const u64 disk_size, const u32 cluster_size)
 	memcpy(mftentry->filename, name, 4);
 	memcpy(rootdata, mftentry, 8 + 1 + mftentry->name_len);
 	if(WriteCluster(root->dataCluster, rootdata, fp) != 0){
-		error(-EIO, "Error de lectura en disco");
+		error(-EIO, "Error reading the disk");
 		free(bitmap_data);
 		free(mft);
 		free(root);
@@ -104,7 +104,7 @@ int FormatDisk(char *disk_filename, const u64 disk_size, const u32 cluster_size)
 	}
 	free(rootdata);
 	if(MftWriteRecord(root->record_number, root, fp) != 0){
-		error(-EIO, "Error de lectura en disco");
+		error(-EIO, "Error reading the disk");
 		free(bitmap_data);
 		free(mft);
 		free(root);
@@ -113,7 +113,7 @@ int FormatDisk(char *disk_filename, const u64 disk_size, const u32 cluster_size)
 		return -EIO;
 	}
 
-	//guardar el bitmap
+	// save the bitmap
 	for(i=0; i<bmp_clusters_count; i++){
 		if(WriteCluster(1 + i, bitmap_data + BOOT_SECTOR->cluster_size*i, fp) != 0)
 			break;
@@ -129,14 +129,14 @@ int FormatDisk(char *disk_filename, const u64 disk_size, const u32 cluster_size)
 FILE* CreateDisk(const char* disk_filename, const u64 disk_size, const u32 cluster_size){
 	FILE *fp;
 	if((fp = fopen(disk_filename, "w")) == NULL){
-		error(-EACCES, "Error formateando la particion");
+		error(-EACCES, "Error formatting the partition");
 		return NULL;
 	}
 	void *zero = xcalloc(cluster_size, 1);
 	u64 i;
 	for(i=0; i<disk_size/(128*1024); i++){
 		if(fwrite(zero, cluster_size, 128, fp) < 1){
-			error(-EIO, "Error de escritura en disco");
+			error(-EIO, "Error writing on disk");
 			return NULL;
 		}
 	}
@@ -191,11 +191,11 @@ s32 ReadCluster(u64 cluster, u8 *data, FILE *fp){
 		return -1;
 	u64 byteToRead = cluster*BOOT_SECTOR->cluster_size;
 	if(fseek(fp, byteToRead, 0) == -1){
-		error(-EACCES, "Error de acceso al disco, leyendo el cluster %l\nFuncion: ReadCluster\n", cluster);
+		error(-EACCES, "Error accessing the disk, reading cluster %l\nReadCluster function\n", cluster);
 		return -EACCES;
 	}
 	if(fread(data, BOOT_SECTOR->cluster_size, 1, fp) < 1){
-		error(-EIO, "Error de lectura de disco, leyendo el cluster %l\nFuncion: ReadCluster\n", cluster);
+		error(-EIO, "Error reading the disk, reading cluster %l\nReadCluster function\n", cluster);
 		return -EIO;
 	}
 	return 0;
@@ -207,11 +207,11 @@ s32 WriteCluster(u64 cluster, u8 *data, FILE *fp){
 		return -1;
 	u64 byteToRead = cluster*BOOT_SECTOR->cluster_size;
 	if(fseek(fp, byteToRead, 0) == -1){
-		error(-EACCES, "Error de acceso al disco\nFuncion: WriteCluster\n");
+		error(-EACCES, "Error accessing the disk\nWriteCluster function\n");
 		return -EACCES;
 	}
 	if((res = fwrite(data, BOOT_SECTOR->cluster_size, 1, fp)) < 1){
-		error(-EIO, "Error de lectura de disco\nFuncion: WriteCluster\n");
+		error(-EIO, "Error reading the disk\nWriteCluster function\n");
 		return -EIO;
 	}
 	return 0;

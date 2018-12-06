@@ -13,7 +13,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "formater.h"
+#include "formatter.h"
 
 int main(int argc, char *argv[]) {
 	if(argc <= 1)

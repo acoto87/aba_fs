@@ -6,11 +6,10 @@
 #include "error.h"
 
 /*
- * Estructura que indica un conjunto de clusters consecutivos, donde
- * el atributo count indica el tamano de ese conjunto
- * el atributo cluster donde empieza el conjunto
- * el atributo next es un puntero al proximo en la lista de los conjuntos
- * de clusters consecutivos del mismo tamano
+ * Represent a set of consecutive clusters, where
+ * count indicate the size of the set
+ * cluster is where the set begin
+ * next is a pointer to the next consecutive set of clusters of the same size
  */
 struct BuddyNode{
 	u32 count;
@@ -43,35 +42,39 @@ static __inline__ u64 powi(u64 x, u64 y){
  */
 extern u64 FindEmptyClusters(u64 *len, FILE *fp);
 /*
- * Copia el contenido de clusterSrc a clusterDest
+ * Copy the contents of clusterSrc to clusterDest
  */
 extern s32 CopyCluster(u64 clusterDest, u64 clusterSrc, FILE *fp);
 /*
- * Marca como no usado el cluster especificado en el bitmap
+ * Mark a cluster as not used
  */
 extern s32 FreeCluster(u64 cluster, FILE *fp);
 /*
- * Marca como ocupado en el bitmap el cluster especificado
+ * Mark a cluster as used
  */
 extern s32 ReserveCluster(u64 cluster, FILE *fp);
 /*
- * Limpia un cluster
+ * Clean a cluster
  */
 extern s32 CleanCluster(u64 cluster, FILE *fp);
 /*
- * Carga las listas del buddy-system para administrar el espacio libre
+ * Load the buddy-system lists to manage the empty space
  */
 extern s32 LoadBuddySystem();
 /*
- * Annade un nuevo nodo a las listas del buddy-system
+ * Add a new node to the buddy-system lists
  */
 extern s32 AddBuddyNode(u64 cluster, u64 count);
 /*
- * Extrae un nodo de las listas de buddy-system
- * El nodo extraido es depositado en el parametro node
+ * Extract a node of the buddy-system lists
+ * The node is returned in the node parameter
  */
 extern s32 RemoveBuddyNode(u32 count, struct BuddyNode *node);
 
+/*
+ * Debug utilities
+ */
 s32 PrintBuddySystem(FILE *fp);
 s32 PrintBitmap(FILE *fp, FILE *disk);
+
 #endif /* FREE_SPACE_MANAGER_H_ */

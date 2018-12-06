@@ -14,7 +14,6 @@
 #include "AbaFileSystem.h"
 
 s32 ReadCluster(u64 cluster, u8 *data, FILE *fp){
-	//VERIFICAR QUE EL CLUSTER ESTE OCUPADO O NO!!!!!!
 	if(cluster < 0 || data == NULL || fp == NULL)
 		return -1;
 	u64 byteToRead = cluster*BOOT_SECTOR->cluster_size;
@@ -179,7 +178,7 @@ s64 AddDirEntryInternal(u64 cluster, NON_RESIDENT_LEVEL nr_level, u32 *ndir_entr
 				}
 				if(res > 1){
 					if(i < BOOT_SECTOR->cluster_size/8){
-						//veo si se puede pegar con el ultimo cluster asignado
+						// if can join the last assigned cluster
 						if(res == data[i] + data[i+1]){
 							data[i+1] += 1;
 						}
@@ -232,12 +231,12 @@ s64 AddDirEntryInternal(u64 cluster, NON_RESIDENT_LEVEL nr_level, u32 *ndir_entr
 }
 s32 AddDirEntry(mft_file_record *dir, directory_entry *entry, FILE *fp){
 	s64 res=0;
-	//si todavia no tiene cluster de datos, le asigno uno
+	
 	if(dir->dataCluster == 0){
 		u64 len=1;
 		dir->dataCluster = FindEmptyClusters(&len, fp);
 		if(len < 1){
-			error(-ENOSPC, "Error, disco lleno");
+			error(-ENOSPC, "Error, full disk");
 			return -ENOSPC;
 		}
 		if((res = CleanCluster(dir->dataCluster, fp)) != 0){
@@ -288,9 +287,8 @@ s64 RemoveDirEntryInternal(u64 cluster, NON_RESIDENT_LEVEL nr_level, u32 *ndir_e
 			currentByte += 8 + 1 + dataCluster[currentByte+8];
 			(*ndir_entry)--;
 		}
-		//comprobar si la encontro
+		
 		if(currententry->entry_number == record_number){
-			//correr todos las entradas restantes
 			while(currentByte < BOOT_SECTOR->cluster_size - 8 - 1 - currententry->name_len){
 				u64 nextentry = currentByte + 8 + 1 + currententry->name_len;
 				memset(dataCluster + currentByte, 0, 8 + 1 + currententry->name_len);
@@ -365,7 +363,7 @@ s32 ModifyDirEntry(u64 cluster, NON_RESIDENT_LEVEL nr_level, u32 *ndir_entry, u6
 			memcpy(dataCluster + currentByte, &new_record_number,8);
 		}
 		else{
-			//retornar 1 para que siga el ciclo y seguir buscando
+			// return 1 to continue the cycle and keep looking
 			res = 1;
 		}
 		free(entry);
@@ -455,15 +453,15 @@ s32 ChangeAllChild(u64 cluster, NON_RESIDENT_LEVEL nr_level, u32 *ndir_entry, u6
 	return res;
  }
 s32 MakeNonResident(mft_file_record *record, FILE *fp){
-	//		bajar el atributo data para un cluster
-	//		poner en el atributo data los punteros
-	//		a los nuevos clusters de datos
-	//		poner en INDIRECT el flag de residencia
-	//		poner en 0 lo que quedo del atributo data sin llenar
+	// download the data attribute for a cluster
+    // put the pointers in the data attribute
+    // to the new data clusters
+    // put the residence flag in INDIRECT
+    // set to 0 what remains of the unfilled data attribute
 	u64 len=1;
 	u64 cluster = FindEmptyClusters(&len, fp);
 	if(len < 1){
-		error(-EACCES, "Error, disco lleno");
+		error(-EACCES, "Error, disk is full");
 		return -EACCES;
 	}
 	u64 *data = (u64*)xcalloc(1, BOOT_SECTOR->cluster_size);
@@ -485,7 +483,6 @@ s32 MakeNonResident(mft_file_record *record, FILE *fp){
 	return errorCode;
 }
 u64 FindEmptyRecord(FILE *fp){
-	//AQUI BUSCAR EN LOS DATOS DEL FICHERO Mft PARA DETERMINAR DONDE ESTA LA ULTIMA ENTRADA
 	u64 cluster=0;
 	if(BOOT_SECTOR->mft_record_count > BOOT_SECTOR->mft_zone_clusters*(BOOT_SECTOR->cluster_size/MFT_RECORD_SIZE)){
 		if(BOOT_SECTOR->mft_record_count % (BOOT_SECTOR->cluster_size/MFT_RECORD_SIZE) == 0){
@@ -540,7 +537,7 @@ s32 FindMftRecordOfPath(const char *path, mft_file_record *parent, mft_file_reco
 
 	u32 i, j=0;
 	for(i=0; i<=len; i++){
-		//47 es el valor ascii de "/" y 0 es el valor ascii de "0"
+		//47 is the ascii value of "/"
 		if(path[i] == 47 || path[i] == 0){
 			if(strlen(current) != 0){
 				directory_entry *direntry = FindDirEntry(actual, current, fp);
@@ -575,7 +572,7 @@ s32 FreeMftRecord(mft_file_record *record, FILE *fp){
 		free(lastRecord);
 		return res;
 	}
-	//si el que voy a eliminar precisamente es el ultimo
+	// If I'm going to remove the last one
 	if(record->record_number == lastRecord->record_number){
 		if((res = RemoveDirEntry(parentLastRecord, record->record_number, fp)) != 0){
 			free(parentLastRecord);
@@ -587,7 +584,7 @@ s32 FreeMftRecord(mft_file_record *record, FILE *fp){
 			free(lastRecord);
 			return res;
 		}
-		//borrarlo y escribirlo, para que se elimine fisicamente
+		// erase it and write it, so that it is physically eliminated
 		u64 lastRecordNumber = lastRecord->record_number;
 		memset(lastRecord, 0, MFT_RECORD_SIZE);
 		if((res = MftWriteRecord(lastRecordNumber, lastRecord, fp)) != 0){
@@ -595,7 +592,7 @@ s32 FreeMftRecord(mft_file_record *record, FILE *fp){
 			free(lastRecord);
 			return res;
 		}
-		//si se quedo el cluster vacio, lo elimino de la mft
+		// if the cluster remained empty, I eliminate it from the mft
 		if(lastRecordNumber%(BOOT_SECTOR->cluster_size*MFT_RECORD_SIZE) == 0){
 			mft_file_record *mft = (mft_file_record*)xcalloc(1, MFT_RECORD_SIZE);
 			if((res = MftReadRecord(0, mft, fp)) != 0){
@@ -655,7 +652,7 @@ s32 FreeMftRecord(mft_file_record *record, FILE *fp){
 				free(parent);
 				return res;
 			}
-			//si se quedo el cluster vacio, lo elimino de la mft
+			// if the cluster remained empty, I eliminate it from the mft
 			if(lastRecordNumber%(BOOT_SECTOR->cluster_size*MFT_RECORD_SIZE) == 0){
 				mft_file_record *mft = (mft_file_record*)xcalloc(1, MFT_RECORD_SIZE);
 				if((res = MftReadRecord(0, mft, fp)) != 0){
@@ -706,7 +703,7 @@ s32 FreeMftRecord(mft_file_record *record, FILE *fp){
 				free(parent);
 				return res;
 			}
-			//borrarlo y escribirlo, para que se elimine fisicamente
+			// erase it and write it, so that it is physically eliminated
 			memset(lastRecord, 0, MFT_RECORD_SIZE);
 			if((res = MftWriteRecord(lastRecordNumber, lastRecord, fp)) != 0){
 				free(parentLastRecord);
@@ -714,7 +711,7 @@ s32 FreeMftRecord(mft_file_record *record, FILE *fp){
 				free(parent);
 				return res;
 			}
-			//si se quedo el cluster vacio, lo elimino de la mft
+			// if the cluster remained empty, I eliminate it from the mft
 			if(lastRecordNumber%(BOOT_SECTOR->cluster_size*MFT_RECORD_SIZE) == 0){
 				mft_file_record *mft = (mft_file_record*)xcalloc(1, MFT_RECORD_SIZE);
 				if((res = MftReadRecord(0, mft, fp)) != 0){
@@ -771,7 +768,7 @@ s32 FreeMftRecord(mft_file_record *record, FILE *fp){
 				free(parent);
 				return res;
 			}
-			//borrarlo y escribirlo, para que se elimine fisicamente
+			// erase it and write it, so that it is physically eliminated
 			memset(lastRecord, 0, MFT_RECORD_SIZE);
 			if((res = MftWriteRecord(lastRecordNumber, lastRecord, fp)) != 0){
 				free(parentLastRecord);
@@ -779,7 +776,7 @@ s32 FreeMftRecord(mft_file_record *record, FILE *fp){
 				free(parent);
 				return res;
 			}
-			//si se quedo el cluster vacio, lo elimino de la mft
+			// if the cluster remained empty, I eliminate it from the mft
 			if(lastRecordNumber%(BOOT_SECTOR->cluster_size*MFT_RECORD_SIZE) == 0){
 				mft_file_record *mft = (mft_file_record*)xcalloc(1, MFT_RECORD_SIZE);
 				if((res = MftReadRecord(0, mft, fp)) != 0){

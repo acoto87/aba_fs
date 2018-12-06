@@ -6,10 +6,10 @@
 #include "declarations.h"
 
 /*
- * Variables globales
+ * Global variables
  */
-char *disk_filename;							//path del fichero disco
-char *log_filename;								//path del fichero log
-mft_file_record *cache[MAX_CACHE_SIZE];			//cache de entradas de mft
+char *disk_filename;							// file path of the disk file
+char *log_filename;								// file path of the log file
+mft_file_record *cache[MAX_CACHE_SIZE];			// cache of entries of the MFT
 
 #endif /* ABA_GLOBAL_H_ */

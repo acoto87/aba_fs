@@ -6,10 +6,10 @@
 #include "declarations.h"
 
 /*
- * Formatea el disco
- * disk_filename=fichero que representa el disco
- * disk_size=tamano del disco
- * cluster_size=tamano del cluster
+ * Format the hdd
+ * disk_filename: file that represent the hdd
+ * disk_size: size of the hdd
+ * cluster_size: cluster size
  */
 int FormatDisk(char* disk_filename, const u64 disk_size, const u32 cluster_size);
 void FillBootSector(const int disk_size, const int cluster_size, struct aba_boot_sector *bs);
